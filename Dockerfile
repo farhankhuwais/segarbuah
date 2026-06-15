@@ -8,15 +8,15 @@ RUN apt-get update && apt-get install -y \
 # Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Fix MPM: remove event/worker entirely (both enabled & available), keep only prefork
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.* && \
-    rm -f /etc/apache2/mods-available/mpm_event.* /etc/apache2/mods-available/mpm_worker.* && \
+# Fix MPM: remove event/worker entirely, keep only prefork + rewrite
+RUN rm -f /etc/apache2/mods-enabled/mpm_*.* /etc/apache2/mods-available/mpm_*.* && \
     a2enmod mpm_prefork rewrite && \
-    ls -la /etc/apache2/mods-enabled/mpm_*.*
+    ls -la /etc/apache2/mods-enabled/mpm_*.* && \
+    apache2ctl configtest
 
 # Set Apache document root to public/
-RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
-RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/apache2.conf
+RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf \
+    /etc/apache2/apache2.conf
 
 # Copy app files
 COPY . /var/www/html/

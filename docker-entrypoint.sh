@@ -1,10 +1,16 @@
 #!/bin/bash
 set -e
 
-# Debug: check MPM modules
+# === FIX MPM: force remove event/worker at runtime, keep only prefork ===
+rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.*
+rm -f /etc/apache2/mods-available/mpm_event.* /etc/apache2/mods-available/mpm_worker.*
+
+if [ ! -f /etc/apache2/mods-enabled/mpm_prefork.load ]; then
+    a2enmod mpm_prefork 2>/dev/null || true
+fi
+
 echo "=== Apache MPM check ==="
-ls -la /etc/apache2/mods-enabled/mpm_*.* 2>&1 || echo "No MPM files found"
-apache2ctl -M 2>&1 | grep -i mpm || echo "No MPM found via apache2ctl"
+ls -la /etc/apache2/mods-enabled/mpm_*.*
 echo "=== End MPM check ==="
 
 # Create storage link
