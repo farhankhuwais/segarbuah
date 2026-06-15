@@ -13,6 +13,18 @@ echo "=== Apache MPM check ==="
 ls -la /etc/apache2/mods-enabled/mpm_*.*
 echo "=== End MPM check ==="
 
+# Create .env from example if missing
+if [ ! -f .env ]; then
+    cp .env.example .env
+fi
+
+# Generate APP_KEY if not set
+if php artisan key:generate --show --no-interaction 2>/dev/null; then
+    echo "APP_KEY already set"
+else
+    php artisan key:generate --force --no-interaction 2>/dev/null || true
+fi
+
 # Create storage link
 php artisan storage:link --force 2>/dev/null || true
 
