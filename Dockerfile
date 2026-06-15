@@ -8,11 +8,10 @@ RUN apt-get update && apt-get install -y \
 # Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Fix MPM: ensure only mpm_prefork is loaded (required for mod_php)
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.*
-
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
+# Fix MPM: only keep mpm_prefork, remove others entirely
+RUN a2dismod -f mpm_event mpm_worker 2>/dev/null; \
+    a2enmod mpm_prefork rewrite; \
+    ls -la /etc/apache2/mods-enabled/mpm_*.*
 
 # Set Apache document root to public/
 RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
