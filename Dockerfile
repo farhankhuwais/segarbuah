@@ -8,7 +8,8 @@ RUN apt-get update && apt-get install -y \
 # Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Enable Apache mod_rewrite
+# Fix MPM conflict & enable mod_rewrite
+RUN a2dismod mpm_event mpm_worker 2>/dev/null || true
 RUN a2enmod rewrite
 
 # Apache document root → public/
