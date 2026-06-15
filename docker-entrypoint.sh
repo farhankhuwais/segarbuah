@@ -46,7 +46,10 @@ if [ ! -f .env ]; then
     echo ".env created from .env.example"
 fi
 
-# Generate APP_KEY if not set
+# Force correct APP_URL in .env (sed is more reliable than export for Laravel)
+sed -i "s|^APP_URL=.*$|APP_URL=https://segarbuah-production.up.railway.app|" .env
+
+# Regenerate APP_KEY in .env
 php artisan key:generate --force --no-interaction || true
 
 # Create storage link
