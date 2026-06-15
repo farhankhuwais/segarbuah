@@ -13,12 +13,29 @@ echo "=== Apache MPM check ==="
 ls -la /etc/apache2/mods-enabled/mpm_*.*
 echo "=== End MPM check ==="
 
-# === Fix DB config: Railway injects MYSQLHOST etc. Export as DB_* for Laravel ===
-export DB_HOST="${MYSQLHOST:-127.0.0.1}"
-export DB_PORT="${MYSQLPORT:-3306}"
-export DB_DATABASE="${MYSQLDATABASE:-laravel}"
-export DB_USERNAME="${MYSQLUSER:-root}"
-export DB_PASSWORD="${MYSQLPASSWORD:-}"
+# === Fix DB config: handle all Railway MySQL naming conventions ===
+if [ -n "$MYSQL_URL" ]; then
+    # Railway MySQL v2 via URL: mysql://user:pass@host:port/db
+    export DB_HOST="$(echo "$MYSQL_URL" | sed -E 's|mysql://[^:]*:[^@]*@([^:/]*).*|\1|')"
+    export DB_PORT="$(echo "$MYSQL_URL" | sed -E 's|.*:([0-9]+)/.*|\1|')"
+    export DB_DATABASE="$(echo "$MYSQL_URL" | sed -E 's|.*/([^?]*).*|\1|')"
+    export DB_USERNAME="$(echo "$MYSQL_URL" | sed -E 's|mysql://([^:]*):.*|\1|')"
+    export DB_PASSWORD="$(echo "$MYSQL_URL" | sed -E 's|mysql://[^:]*:([^@]*)@.*|\1|')"
+elif [ -n "$DATABASE_URL" ]; then
+    # Generic DATABASE_URL fallback
+    export DB_HOST="$(echo "$DATABASE_URL" | sed -E 's|.*@([^:/]*).*|\1|')"
+    export DB_PORT="$(echo "$DATABASE_URL" | sed -E 's|.*:([0-9]+)/.*|\1|')"
+    export DB_DATABASE="$(echo "$DATABASE_URL" | sed -E 's|.*/([^?]*).*|\1|')"
+    export DB_USERNAME="$(echo "$DATABASE_URL" | sed -E 's|mysql://([^:]*):.*|\1|')"
+    export DB_PASSWORD="$(echo "$DATABASE_URL" | sed -E 's|mysql://[^:]*:([^@]*)@.*|\1|')"
+else
+    # Individual variables — try new names (v2) first, then old names (v1)
+    export DB_HOST="${MYSQL_HOST:-${MYSQLHOST:-127.0.0.1}}"
+    export DB_PORT="${MYSQL_PORT:-${MYSQLPORT:-3306}}"
+    export DB_DATABASE="${MYSQL_DATABASE:-${MYSQLDATABASE:-laravel}}"
+    export DB_USERNAME="${MYSQL_USER:-${MYSQLUSER:-root}}"
+    export DB_PASSWORD="${MYSQL_PASSWORD:-${MYSQLPASSWORD:-}}"
+fi
 export APP_URL="${APP_URL:-https://segarbuah-production.up.railway.app}"
 
 echo "DB_HOST=$DB_HOST DB_PORT=$DB_PORT DB_DATABASE=$DB_DATABASE"
