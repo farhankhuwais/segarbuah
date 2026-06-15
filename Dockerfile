@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y \
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Fix MPM: remove event/worker entirely, keep only prefork + rewrite
-RUN rm -f /etc/apache2/mods-enabled/mpm_*.* /etc/apache2/mods-available/mpm_*.* && \
+RUN rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.* \
+       /etc/apache2/mods-available/mpm_event.* /etc/apache2/mods-available/mpm_worker.* && \
     a2enmod mpm_prefork rewrite && \
     ls -la /etc/apache2/mods-enabled/mpm_*.* && \
     apache2ctl configtest
