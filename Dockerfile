@@ -8,9 +8,10 @@ RUN apt-get update && apt-get install -y \
 # Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Fix MPM: only keep mpm_prefork, remove others entirely
-RUN a2dismod -f mpm_event mpm_worker 2>/dev/null; \
-    a2enmod mpm_prefork rewrite; \
+# Fix MPM: remove event/worker entirely (both enabled & available), keep only prefork
+RUN rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.* && \
+    rm -f /etc/apache2/mods-available/mpm_event.* /etc/apache2/mods-available/mpm_worker.* && \
+    a2enmod mpm_prefork rewrite && \
     ls -la /etc/apache2/mods-enabled/mpm_*.*
 
 # Set Apache document root to public/
