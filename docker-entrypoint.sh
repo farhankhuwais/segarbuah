@@ -13,22 +13,32 @@ echo "=== Apache MPM check ==="
 ls -la /etc/apache2/mods-enabled/mpm_*.*
 echo "=== End MPM check ==="
 
+# === Fix DB config: Railway injects MYSQLHOST etc. Export as DB_* for Laravel ===
+export DB_HOST="${MYSQLHOST:-127.0.0.1}"
+export DB_PORT="${MYSQLPORT:-3306}"
+export DB_DATABASE="${MYSQLDATABASE:-laravel}"
+export DB_USERNAME="${MYSQLUSER:-root}"
+export DB_PASSWORD="${MYSQLPASSWORD:-}"
+
+# === Fix APP_URL from Railway domain if not already set ===
+if [ -z "$APP_URL" ]; then
+    export APP_URL="https://segarbuah-production.up.railway.app"
+fi
+
 # Create .env from example if missing
 if [ ! -f .env ]; then
     cp .env.example .env
 fi
 
 # Generate APP_KEY if not set
-if php artisan key:generate --show --no-interaction 2>/dev/null; then
-    echo "APP_KEY already set"
-else
+if ! php artisan key:generate --show --no-interaction 2>/dev/null; then
     php artisan key:generate --force --no-interaction 2>/dev/null || true
 fi
 
 # Create storage link
 php artisan storage:link --force 2>/dev/null || true
 
-# Cache config & routes
+# Cache config & routes (DB env vars are now set from Railway)
 php artisan config:cache 2>/dev/null || true
 php artisan route:cache 2>/dev/null || true
 php artisan view:cache 2>/dev/null || true
